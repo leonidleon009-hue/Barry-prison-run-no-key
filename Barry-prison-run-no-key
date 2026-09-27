@@ -1,0 +1,169 @@
+local P=game:GetService("Players")
+local R=game:GetService("ReplicatedStorage")
+local T=game:GetService("TweenService")
+local U=game:GetService("UserInputService")
+local LP=P.LocalPlayer
+
+local function getTools()
+    local S=R:WaitForChild("ShopAssetsFolder",10)
+    if not S then return end
+    local TF=S:WaitForChild("ToolsFolder",5)
+    if not TF then return end
+    local T2=TF:WaitForChild("Tools",5)
+    if not T2 then return end
+    local AR=S:FindFirstChild("AssetRemotes")
+    local ST=AR and AR:FindFirstChild("SendTool")
+    if not ST then return end
+
+    local all={}
+    local function c(f)
+        for _,i in ipairs(f:GetChildren()) do
+            if i:IsA("Tool") then table.insert(all,i)
+            elseif i:IsA("Folder") then c(i) end
+        end
+    end
+    c(T2)
+
+    for _,i in ipairs(LP.Backpack:GetChildren()) do
+        if i:IsA("Tool") then i:Destroy() end
+    end
+    if LP.Character then
+        for _,i in ipairs(LP.Character:GetChildren()) do
+            if i:IsA("Tool") then i:Destroy() end
+        end
+    end
+
+    for i=1,#all,5 do
+        for j=i,math.min(i+4,#all) do
+            local t=all[j]
+            task.spawn(function()
+                pcall(function() ST:FireServer(t.Name,true) end)
+            end)
+        end
+        task.wait(0.05)
+    end
+end
+
+local o=LP.PlayerGui:FindFirstChild("BarryMenu")
+if o then o:Destroy() end
+
+local g=Instance.new("ScreenGui")
+g.Name="BarryMenu"
+g.ResetOnSpawn=false
+g.Parent=LP:WaitForChild("PlayerGui")
+
+local m=Instance.new("Frame")
+m.Size=UDim2.new(0,200,0,87)
+m.Position=UDim2.new(0,20,0,20)
+m.BackgroundColor3=Color3.fromRGB(70,70,70)
+m.BorderSizePixel=0
+m.ClipsDescendants=true
+m.Parent=g
+
+local mc=Instance.new("UICorner")
+mc.CornerRadius=UDim.new(0,8)
+mc.Parent=m
+
+local h=Instance.new("Frame")
+h.Size=UDim2.new(1,0,0,32)
+h.BackgroundColor3=Color3.fromRGB(55,55,55)
+h.BorderSizePixel=0
+h.Parent=m
+
+local hc=Instance.new("UICorner")
+hc.CornerRadius=UDim.new(0,8)
+hc.Parent=h
+
+local ht=Instance.new("TextLabel")
+ht.Size=UDim2.new(1,-35,1,0)
+ht.Position=UDim2.new(0,8,0,0)
+ht.BackgroundTransparency=1
+ht.Text="Barry prison run"
+ht.TextColor3=Color3.fromRGB(255,255,255)
+ht.TextScaled=true
+ht.Font=Enum.Font.GothamBold
+ht.TextXAlignment=Enum.TextXAlignment.Left
+ht.Parent=h
+
+local a=Instance.new("TextButton")
+a.Size=UDim2.new(0,28,0,28)
+a.Position=UDim2.new(1,-32,0.5,-14)
+a.BackgroundColor3=Color3.fromRGB(45,45,45)
+a.BorderSizePixel=0
+a.Text="v"
+a.TextColor3=Color3.fromRGB(255,255,255)
+a.TextScaled=true
+a.Font=Enum.Font.GothamBold
+a.Parent=h
+
+local ac=Instance.new("UICorner")
+ac.CornerRadius=UDim.new(0,6)
+ac.Parent=a
+
+local c2=Instance.new("Frame")
+c2.Size=UDim2.new(1,0,0,55)
+c2.Position=UDim2.new(0,0,0,32)
+c2.BackgroundTransparency=1
+c2.Parent=m
+
+local b=Instance.new("TextButton")
+b.Size=UDim2.new(1,-16,0,40)
+b.Position=UDim2.new(0,8,0,8)
+b.BackgroundColor3=Color3.fromRGB(90,90,90)
+b.BorderSizePixel=0
+b.Text="Get Tool all"
+b.TextColor3=Color3.fromRGB(255,255,255)
+b.TextScaled=true
+b.Font=Enum.Font.GothamBold
+b.Parent=c2
+
+local bc=Instance.new("UICorner")
+bc.CornerRadius=UDim.new(0,6)
+bc.Parent=b
+
+b.MouseButton1Click:Connect(function()
+    b.Text="OK!"
+    task.spawn(function()
+        pcall(getTools)
+    end)
+    task.wait(1.2)
+    b.Text="Get Tool all"
+end)
+
+local open=true
+a.MouseButton1Click:Connect(function()
+    open=not open
+    if open then
+        a.Text="v"
+        c2.Visible=true
+        T:Create(m,TweenInfo.new(0.2),{Size=UDim2.new(0,200,0,87)}):Play()
+    else
+        a.Text="^"
+        local tw=T:Create(m,TweenInfo.new(0.2),{Size=UDim2.new(0,200,0,32)})
+        tw:Play()
+        tw.Completed:Connect(function() c2.Visible=false end)
+    end
+end)
+
+local dg,di,ds,sp
+h.InputBegan:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
+        dg=true
+        ds=i.Position
+        sp=m.Position
+        i.Changed:Connect(function()
+            if i.UserInputState==Enum.UserInputState.End then dg=false end
+        end)
+    end
+end)
+h.InputChanged:Connect(function(i)
+    if i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch then
+        di=i
+    end
+end)
+U.InputChanged:Connect(function(i)
+    if i==di and dg then
+        local d=i.Position-ds
+        m.Position=UDim2.new(sp.X.Scale,sp.X.Offset+d.X,sp.Y.Scale,sp.Y.Offset+d.Y)
+    end
+end)
